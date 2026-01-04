@@ -64,11 +64,17 @@
         .toggle-btn { flex: 1; text-align: center; font-size: 11px; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #5f6368; transition: all 0.5s ease; } 
         .active-mode { background: white; color: var(--g-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); } 
 
-        #mapArea { 
-            flex: 1; position: relative; background: #fdfdfd; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; padding-bottom: 100px; 
-            perspective: 1500px;
-        } 
+       #mapArea { 
+    flex: 1; 
+    position: relative; 
+    background: #fdfdfd; 
+    overflow: hidden; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    padding-bottom: 0px; /* Changed from 100px to 0px */
+    perspective: 1500px;
+}
 
         #mapRotationContainer { 
             width: 1000px; height: 400px; position: absolute; 
@@ -95,12 +101,17 @@
             display: none; 
         } 
 
-        #navCard { 
-            position: absolute; bottom: 0; width: 100%; background: white; 
-            display: none; z-index: 600; border-radius: 28px 28px 0 0; 
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            animation: slideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-        } 
+         #navCard { 
+    position: relative; /* Changed from absolute to relative */
+    width: 100%; 
+    background: white; 
+    display: none; 
+    z-index: 600; 
+    border-radius: 28px 28px 0 0; 
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+    flex-shrink: 0; /* Ensures the card doesn't shrink */
+}
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .btn { flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; transition: transform 0.3s ease; } 
@@ -399,4 +410,3 @@ update();
 </script> 
 </body> 
 </html>
-
