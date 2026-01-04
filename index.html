@@ -2,7 +2,7 @@
 <html lang="en"> 
 <head> 
     <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
     <title>CPS Navigator Pro</title> 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style> 
@@ -14,25 +14,21 @@
         } 
         body { 
             margin: 0; padding: 0; font-family: 'Inter', sans-serif; 
-            background: var(--dark); height: 100%; overflow: hidden; 
+            background: var(--dark); height: 100vh; display: flex; 
+            justify-content: center; align-items: center; overflow: hidden; 
         } 
         #phone-wrapper { 
-            position: fixed; top: 0; bottom: 0; left: 50%;
-            transform: translateX(-50%);
-            width: 100vw; max-width: 412px; 
-            background: var(--bg); 
-            display: flex; flex-direction: column; overflow: hidden; 
+            width: 100vw; max-width: 412px; height: 100vh; background: var(--bg); 
+            display: flex; flex-direction: column; position: relative; overflow: hidden; 
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         } 
         
         #header { 
-            flex-shrink: 0;
             background: var(--surface); color: var(--g-blue); padding: 20px; 
             display: flex; justify-content: space-between; align-items: center;
             font-weight: 800; letter-spacing: 1.5px; z-index: 100; border-bottom: 1px solid #e0e0e0;
         } 
         #controls { 
-            flex-shrink: 0;
             padding: 16px; 
             background: var(--surface); 
             z-index: 100; 
@@ -44,6 +40,7 @@
         
         .search-box {
             width: 100%; 
+            max-width: 100%;
             padding: 12px; 
             border-radius: 12px; 
             border: 1.5px solid #eee; 
@@ -52,21 +49,24 @@
             outline: none; 
             box-sizing: border-box; 
             background: #f1f3f4; 
+            transition: all 0.3s ease;
             appearance: none;
         }
         .chips-container { width: 100%; display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
         .chip { 
             padding: 8px 16px; background: #e8f0fe; color: var(--g-blue); 
             border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .chip:active { transform: scale(0.9); }
 
         .toggle-container { width: 100%; display: flex; background: #f1f3f4; border-radius: 12px; margin-bottom: 10px; padding: 4px; box-sizing: border-box; } 
-        .toggle-btn { flex: 1; text-align: center; font-size: 11px; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #5f6368; } 
+        .toggle-btn { flex: 1; text-align: center; font-size: 11px; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #5f6368; transition: all 0.5s ease; } 
         .active-mode { background: white; color: var(--g-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); } 
 
         #mapArea { 
             flex: 1; position: relative; background: #fdfdfd; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center;
+            display: flex; justify-content: center; align-items: center; padding-bottom: 100px; 
             perspective: 1500px;
         } 
 
@@ -80,12 +80,13 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(26, 115, 232, 0.9); z-index: 500; display: none;
             flex-direction: column; justify-content: center; align-items: center; color: white;
+            transition: opacity 0.5s ease;
         }
 
         @keyframes softPulse {
-            0% { r: 7; stroke-width: 3; }
-            50% { r: 9; stroke-width: 4; }
-            100% { r: 7; stroke-width: 3; }
+            0% { r: 7; stroke-width: 3; filter: drop-shadow(0 0 5px rgba(26, 115, 232, 0.4)); }
+            50% { r: 9; stroke-width: 4; filter: drop-shadow(0 0 15px rgba(26, 115, 232, 0.8)); }
+            100% { r: 7; stroke-width: 3; filter: drop-shadow(0 0 5px rgba(26, 115, 232, 0.4)); }
         }
         #userMarker { 
             fill: var(--g-blue); stroke: white; stroke-width: 3; 
@@ -95,21 +96,22 @@
         } 
 
         #navCard { 
-            flex-shrink: 0;
-            width: 100%; background: white; 
+            position: absolute; bottom: 0; width: 100%; background: white; 
             display: none; z-index: 600; border-radius: 28px 28px 0 0; 
             box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            padding-bottom: env(safe-area-inset-bottom, 20px);
+            animation: slideUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
         } 
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .btn { flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; } 
+        .btn { flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; transition: transform 0.3s ease; } 
+        .btn:active { transform: scale(0.96); }
         
         .room-box { fill: #fff; stroke: #bdc1c6; stroke-width: 1.2; rx: 4; ry: 4; vector-effect: non-scaling-stroke; } 
         .room-label { font-size: 8px; font-weight: 600; fill: #5f6368; text-anchor: middle; pointer-events: none; } 
         .door-mark { fill: white; stroke: none; }
 
         #pathLine { stroke: var(--g-blue); stroke-width: 12; stroke-opacity: 0.1; fill: none; stroke-linecap: round; }
-        #pathCore { stroke: var(--g-blue); stroke-width: 4; fill: none; stroke-linecap: round; }
+        #pathCore { stroke: var(--g-blue); stroke-width: 4; fill: none; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(26, 115, 232, 0.4)); }
 
         .confetti { position: absolute; width: 8px; height: 8px; z-index: 1000; pointer-events: none; border-radius: 2px; }
         @keyframes confettiFall { 
@@ -162,24 +164,30 @@
     </div> 
 
     <div id="navCard"> 
-        <div style="padding: 24px; font-weight: 600; font-size: 18px; text-align: center; color: var(--text);" id="stepText">Ready</div> 
-        <div style="padding: 0 20px 20px; display: flex; gap: 12px;">
-            <button class="btn" style="background:#f1f3f4; color:#5f6368" onclick="prevStep()">BACK</button>
-            <button class="btn" style="background:var(--g-blue); color:white" onclick="nextStep()">NEXT</button>
-            <button class="btn" style="background:#ea4335; color:white; flex: 0.4" onclick="resetNav()">EXIT</button>
-        </div> 
+    <div style="padding: 24px; font-weight: 600; font-size: 18px; text-align: center; color: var(--text);" id="stepText">Ready</div> 
+    
+    <div style="padding: 0 20px 20px; display: flex; gap: 12px;">
+        <button class="btn" style="background:#f1f3f4; color:#5f6368" onclick="prevStep()">BACK</button>
+        <button class="btn" style="background:var(--g-blue); color:white" onclick="nextStep()">NEXT</button>
+        <button class="btn" style="background:#ea4335; color:white; flex: 0.4" onclick="resetNav()">EXIT</button>
     </div> 
+</div>
 </div> 
 
 <script> 
 let currentMode = 'static', currentAngle = 0, currentFloor = 0, route = [], stepIdx = 0, isNavigating = false; 
 
 const roomData = [ 
+    /* GROUND FLOOR */
     {id:"110", n:"CIE 3B", f:0, x:75, y:185, s:'t'}, {id:"111", n:"Tamil Room", f:0, x:125, y:185, s:'t'}, {id:"112", n:"CIE 2B", f:0, x:175, y:185, s:'t'},
     {id:"113", n:"CIE 4", f:0, x:315, y:185, s:'t'}, {id:"114", n:"CIE 2A", f:0, x:365, y:185, s:'t'}, {id:"115", n:"HOS Office", f:0, x:415, y:185, s:'t'}, {id:"116", n:"Conference Room", f:0, x:465, y:185, s:'t'}, {id:"117", n:"Exam Cell", f:0, x:515, y:185, s:'t'}, {id:"118", n:"French Room", f:0, x:565, y:185, s:'t'}, {id:"119", n:"EY 2", f:0, x:615, y:185, s:'t'}, {id:"120", n:"EY 3B", f:0, x:665, y:185, s:'t'}, {id:"121", n:"Staff Room G", f:0, x:815, y:185, s:'t'}, {id:"GW0", n:"Girls Washroom", f:0, x:865, y:185, s:'t'},
     {id:"BW0", n:"Boys Washroom", f:0, x:75, y:215, s:'b'}, {id:"109", n:"Music Room", f:0, x:125, y:215, s:'b'}, {id:"108", n:"CIE 3A", f:0, x:315, y:215, s:'b'}, {id:"107", n:"CIE 1A", f:0, x:365, y:215, s:'b'}, {id:"106", n:"IG Coordinator", f:0, x:415, y:215, s:'b'}, {id:"100", n:"Reception", f:0, x:465, y:215, s:'b'}, {id:"105", n:"Admin Office", f:0, x:515, y:215, s:'b'}, {id:"104", n:"CIE 1B", f:0, x:565, y:215, s:'b'}, {id:"103", n:"EY 1", f:0, x:615, y:215, s:'b'}, {id:"102", n:"EY 3A", f:0, x:665, y:215, s:'b'}, {id:"101", n:"Chemistry Lab", f:0, x:840, y:215, s:'b', w:100},
+    
+    /* FIRST FLOOR - Washrooms Restored */
     {id:"BW1", n:"Boys Washroom", f:1, x:75, y:215, s:'b'}, {id:"208", n:"CS Lab", f:1, x:160, y:215, s:'b', w:100}, {id:"207", n:"DP 1", f:1, x:340, y:215, s:'b'}, {id:"206", n:"IG 1", f:1, x:440, y:215, s:'b'}, {id:"205", n:"Library", f:1, x:560, y:215, s:'b', w:185}, {id:"204", n:"CIE 7", f:1, x:680, y:215, s:'b'}, {id:"203", n:"CIE 5", f:1, x:740, y:215, s:'b'}, {id:"202", n:"Biology Lab", f:1, x:860, y:215, s:'b'}, {id:"201", n:"ESS Lab", f:1, x:920, y:215, s:'b'},
     {id:"209", n:"Art Lab", f:1, x:140, y:185, s:'t', w:150}, {id:"210", n:"DP 2", f:1, x:340, y:185, s:'t'}, {id:"211", n:"IG 2", f:1, x:440, y:185, s:'t'}, {id:"212", n:"Physics Lab", f:1, x:540, y:185, s:'t', w:100}, {id:"213", n:"CIE 8", f:1, x:640, y:185, s:'t'}, {id:"214", n:"CIE 6", f:1, x:710, y:185, s:'t'}, {id:"215", n:"Staff Room F1", f:1, x:840, y:185, s:'t'}, {id:"GW1", n:"Girls Washroom", f:1, x:895, y:185, s:'t'},
+    
+    /* SECOND FLOOR */
     {id:"306", n:"Staff Room F2", f:2, x:315, y:185, s:'t'}, {id:"307", n:"ESL Room", f:2, x:365, y:185, s:'t'}, {id:"308", n:"Hindi Room", f:2, x:450, y:185, s:'t'}, {id:"309", n:"Tamil Room", f:2, x:550, y:185, s:'t'}, {id:"310", n:"Optional Room", f:2, x:650, y:185, s:'t'},
     {id:"305", n:"Store Room", f:2, x:180, y:215, s:'b'}, {id:"304", n:"TT Room", f:2, x:250, y:215, s:'b'}, {id:"303", n:"Maths Dept", f:2, x:450, y:215, s:'b'}, {id:"302", n:"Economics Dept", f:2, x:550, y:215, s:'b'}, {id:"301", n:"MPH Hall", f:2, x:800, y:215, s:'b'}
 ]; 
@@ -227,8 +235,10 @@ function drawFloor(f) {
         const roomWidth = r.w || 48; 
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); 
         const ry = r.s === 't' ? r.y - 60 : r.y;
-        rect.setAttribute("x", r.x - (roomWidth / 2)); rect.setAttribute("y", ry); 
-        rect.setAttribute("width", roomWidth); rect.setAttribute("height", 60);
+        rect.setAttribute("x", r.x - (roomWidth / 2));
+        rect.setAttribute("y", ry); 
+        rect.setAttribute("width", roomWidth);
+        rect.setAttribute("height", 60);
         rect.setAttribute("class", "room-box"); 
         g.appendChild(rect); 
 
@@ -292,7 +302,30 @@ function update() {
     } 
 
     const pts = route.slice(0, stepIdx + 1).filter(p => p.f === currentFloor).map(p => `${p.x},${p.y}`).join(" "); 
-    pLine.setAttribute("points", pts); pCore.setAttribute("points", pts);
+    
+    if (stepIdx > 0 && route[stepIdx-1].f === cur.f) {
+        const prevPts = route.slice(0, stepIdx).filter(p => p.f === currentFloor).map(p => `${p.x},${p.y}`).join(" ");
+        const tempLine = pLine.cloneNode();
+        tempLine.setAttribute("points", pts);
+        document.body.appendChild(tempLine);
+        const totalLength = tempLine.getTotalLength();
+        tempLine.setAttribute("points", prevPts);
+        const prevLength = tempLine.getTotalLength();
+        document.body.removeChild(tempLine);
+
+        pLine.setAttribute("points", pts); pCore.setAttribute("points", pts);
+        pLine.style.transition = 'none'; pCore.style.transition = 'none';
+        pLine.style.strokeDasharray = totalLength; pCore.style.strokeDasharray = totalLength;
+        pLine.style.strokeDashoffset = totalLength - prevLength; pCore.style.strokeDashoffset = totalLength - prevLength;
+        pLine.getBoundingClientRect(); 
+        
+        pLine.style.transition = 'stroke-dashoffset 2.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        pCore.style.transition = 'stroke-dashoffset 2.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        pLine.style.strokeDashoffset = '0'; pCore.style.strokeDashoffset = '0';
+    } else {
+        pLine.setAttribute("points", pts); pCore.setAttribute("points", pts);
+        pLine.style.strokeDashoffset = '0'; pCore.style.strokeDashoffset = '0';
+    }
 } 
 
 function quickNav(id) { document.getElementById("destSelect").value = id; startNav(); }
@@ -305,15 +338,21 @@ function startNav() {
     isNavigating = true;
     const sCY = s.s === 't' ? s.y - 30 : s.y + 30, dCY = d.s === 't' ? d.y - 30 : d.y + 30;
     
+    // 1. Exit the room
     route = [{ x: s.x, y: sCY, f: s.f, t: `Exit ${s.n}` }]; 
     route.push({ x: s.x, y: 200, f: s.f, t: "Step into the hallway" });
 
     if (s.f !== d.f) { 
+        // 2. Multi-floor logic
         const leftStairX = 260;
         const rightStairX = 760;
+        
+        // Pick nearest stairs
         const isLeftNear = Math.abs(s.x - leftStairX) < Math.abs(s.x - rightStairX);
         const stairX = isLeftNear ? leftStairX : rightStairX;
         const stairName = isLeftNear ? "Left" : "Right";
+        
+        // Calculate direction to stairs
         const toStairDir = stairX > s.x ? "Turn Right" : "Turn Left";
         
         route.push(
@@ -323,18 +362,22 @@ function startNav() {
             { x: stairX, y: 200, f: d.f, t: "Walk back into the hallway" }
         ); 
 
+        // 3. Direction from stairs to destination room
         const finalDir = d.x > stairX ? "Turn Right" : "Turn Left";
         route.push({ x: d.x, y: 200, f: d.f, t: `${finalDir} and walk straight` });
     } else {
+        // 4. Same floor logic
         const directDir = d.x > s.x ? "Turn Right" : "Turn Left";
         route.push({ x: d.x, y: 200, f: d.f, t: `${directDir} and walk straight` });
     }
 
+    // 5. Final Arrival
     route.push({ x: d.x, y: dCY, f: d.f, t: `Arrived! ${d.n} is on your ${d.s === 't' ? 'Left' : 'Right'}` }); 
 
     stepIdx = 0; 
-    document.getElementById("navCard").style.display = "block"; 
-    update(); 
+   document.getElementById("navCard").style.display = "block"; 
+    
+    update();
 }
 
 function nextStep() { if(stepIdx < route.length - 1) { stepIdx++; update(); } else { resetNav(); } } 
@@ -349,11 +392,14 @@ function setMode(m) {
 
 const sEl = document.getElementById("startSelect"), dEl = document.getElementById("destSelect"); 
 roomData.sort((a,b)=>a.n.localeCompare(b.n)).forEach(r => { 
-    sEl.add(new Option(r.n, r.id)); 
-    dEl.add(new Option(r.n, r.id)); 
+    const optStart = new Option(r.n, r.id);
+    const optDest = new Option(r.n, r.id);
+    sEl.add(optStart); 
+    dEl.add(optDest); 
 }); 
 
-sEl.value = "100"; 
+sEl.value = "100"; // Default: Reception
+
 drawFloor(0); 
 update(); 
 </script> 
