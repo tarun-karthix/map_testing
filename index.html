@@ -1,0 +1,361 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"> 
+    <title>CPS Navigator Pro</title> 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style> 
+         :root { 
+            --g-blue: #1a73e8; --dark: #202124; 
+            --bg: #f8f9fa; --surface: #ffffff; --text: #3c4043;
+            --grid: #e0e0e0;
+            --transition-speed: 2.5s; 
+        } 
+        body { 
+            margin: 0; padding: 0; font-family: 'Inter', sans-serif; 
+            background: var(--dark); height: 100%; overflow: hidden; 
+        } 
+        #phone-wrapper { 
+            position: fixed; top: 0; bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 100vw; max-width: 412px; 
+            background: var(--bg); 
+            display: flex; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        } 
+        
+        #header { 
+            flex-shrink: 0;
+            background: var(--surface); color: var(--g-blue); padding: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 800; letter-spacing: 1.5px; z-index: 100; border-bottom: 1px solid #e0e0e0;
+        } 
+        #controls { 
+            flex-shrink: 0;
+            padding: 16px; 
+            background: var(--surface); 
+            z-index: 100; 
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        } 
+        
+        .search-box {
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1.5px solid #eee; 
+            margin-bottom: 8px; 
+            font-size: 14px; 
+            outline: none; 
+            box-sizing: border-box; 
+            background: #f1f3f4; 
+            appearance: none;
+        }
+        .chips-container { width: 100%; display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .chip { 
+            padding: 8px 16px; background: #e8f0fe; color: var(--g-blue); 
+            border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+
+        .toggle-container { width: 100%; display: flex; background: #f1f3f4; border-radius: 12px; margin-bottom: 10px; padding: 4px; box-sizing: border-box; } 
+        .toggle-btn { flex: 1; text-align: center; font-size: 11px; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 700; color: #5f6368; } 
+        .active-mode { background: white; color: var(--g-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); } 
+
+        #mapArea { 
+            flex: 1; position: relative; background: #fdfdfd; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center;
+            perspective: 1500px;
+        } 
+
+        #mapRotationContainer { 
+            width: 1000px; height: 400px; position: absolute; 
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1); 
+            transform-origin: center center; 
+        } 
+        
+        #floorOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 115, 232, 0.9); z-index: 500; display: none;
+            flex-direction: column; justify-content: center; align-items: center; color: white;
+        }
+
+        @keyframes softPulse {
+            0% { r: 7; stroke-width: 3; }
+            50% { r: 9; stroke-width: 4; }
+            100% { r: 7; stroke-width: 3; }
+        }
+        #userMarker { 
+            fill: var(--g-blue); stroke: white; stroke-width: 3; 
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            animation: softPulse 3.5s infinite ease-in-out;
+            display: none; 
+        } 
+
+        #navCard { 
+            flex-shrink: 0;
+            width: 100%; background: white; 
+            display: none; z-index: 600; border-radius: 28px 28px 0 0; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        } 
+
+        .btn { flex: 1; padding: 16px; border-radius: 16px; border: none; font-weight: 700; cursor: pointer; } 
+        
+        .room-box { fill: #fff; stroke: #bdc1c6; stroke-width: 1.2; rx: 4; ry: 4; vector-effect: non-scaling-stroke; } 
+        .room-label { font-size: 8px; font-weight: 600; fill: #5f6368; text-anchor: middle; pointer-events: none; } 
+        .door-mark { fill: white; stroke: none; }
+
+        #pathLine { stroke: var(--g-blue); stroke-width: 12; stroke-opacity: 0.1; fill: none; stroke-linecap: round; }
+        #pathCore { stroke: var(--g-blue); stroke-width: 4; fill: none; stroke-linecap: round; }
+
+        .confetti { position: absolute; width: 8px; height: 8px; z-index: 1000; pointer-events: none; border-radius: 2px; }
+        @keyframes confettiFall { 
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; } 
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } 
+        }
+    </style> 
+</head> 
+<body> 
+<div id="phone-wrapper"> 
+    <div id="header"><span>CPS NAV PRO</span><div id="floorBadge" style="font-size: 10px; background: #e8f0fe; padding: 4px 10px; border-radius: 20px;">GROUND</div></div> 
+    
+    <div id="controls"> 
+        <div class="toggle-container"> 
+            <div id="staticBtn" class="toggle-btn active-mode" onclick="setMode('static')">OVERVIEW</div> 
+            <div id="dynamicBtn" class="toggle-btn" onclick="setMode('dynamic')">FOCUS</div> 
+        </div> 
+        <div class="chips-container">
+            <div class="chip" onclick="quickNav('100')">Reception</div>
+            <div class="chip" onclick="quickNav('205')">Library</div>
+            <div class="chip" onclick="quickNav('101')">Chemistry</div>
+            <div class="chip" onclick="quickNav('301')">MPH Hall</div>
+        </div>
+        <select id="startSelect" class="search-box"></select> 
+        <select id="destSelect" class="search-box"></select> 
+        <button class="btn" style="background:var(--g-blue); color:white; width:100%" onclick="startNav()">START NAV</button> 
+    </div> 
+
+    <div id="mapArea"> 
+        <div id="floorOverlay">
+            <div id="overlayArrow" style="font-size: 40px; margin-bottom: 10px;">↑</div>
+            <div id="overlayText" style="font-weight: 700; letter-spacing: 1px;">CHANGING FLOORS</div>
+        </div>
+        <div id="mapRotationContainer"> 
+            <svg id="floorMap" viewBox="0 0 1000 400" shape-rendering="geometricPrecision"> 
+                <defs>
+                    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#f1f3f4" stroke-width="1"/>
+                    </pattern>
+                </defs>
+                <rect width="1000" height="400" fill="url(#gridPattern)" />
+                <rect x="50" y="185" width="900" height="30" fill="#f1f3f4" rx="15"/> 
+                <g id="stairsLayer"></g> 
+                <g id="roomsLayer"></g> 
+                <polyline id="pathLine" /> 
+                <polyline id="pathCore" /> 
+                <circle id="userMarker" r="7" cx="-20" cy="-20" />
+            </svg> 
+        </div> 
+    </div> 
+
+    <div id="navCard"> 
+        <div style="padding: 24px; font-weight: 600; font-size: 18px; text-align: center; color: var(--text);" id="stepText">Ready</div> 
+        <div style="padding: 0 20px 20px; display: flex; gap: 12px;">
+            <button class="btn" style="background:#f1f3f4; color:#5f6368" onclick="prevStep()">BACK</button>
+            <button class="btn" style="background:var(--g-blue); color:white" onclick="nextStep()">NEXT</button>
+            <button class="btn" style="background:#ea4335; color:white; flex: 0.4" onclick="resetNav()">EXIT</button>
+        </div> 
+    </div> 
+</div> 
+
+<script> 
+let currentMode = 'static', currentAngle = 0, currentFloor = 0, route = [], stepIdx = 0, isNavigating = false; 
+
+const roomData = [ 
+    {id:"110", n:"CIE 3B", f:0, x:75, y:185, s:'t'}, {id:"111", n:"Tamil Room", f:0, x:125, y:185, s:'t'}, {id:"112", n:"CIE 2B", f:0, x:175, y:185, s:'t'},
+    {id:"113", n:"CIE 4", f:0, x:315, y:185, s:'t'}, {id:"114", n:"CIE 2A", f:0, x:365, y:185, s:'t'}, {id:"115", n:"HOS Office", f:0, x:415, y:185, s:'t'}, {id:"116", n:"Conference Room", f:0, x:465, y:185, s:'t'}, {id:"117", n:"Exam Cell", f:0, x:515, y:185, s:'t'}, {id:"118", n:"French Room", f:0, x:565, y:185, s:'t'}, {id:"119", n:"EY 2", f:0, x:615, y:185, s:'t'}, {id:"120", n:"EY 3B", f:0, x:665, y:185, s:'t'}, {id:"121", n:"Staff Room G", f:0, x:815, y:185, s:'t'}, {id:"GW0", n:"Girls Washroom", f:0, x:865, y:185, s:'t'},
+    {id:"BW0", n:"Boys Washroom", f:0, x:75, y:215, s:'b'}, {id:"109", n:"Music Room", f:0, x:125, y:215, s:'b'}, {id:"108", n:"CIE 3A", f:0, x:315, y:215, s:'b'}, {id:"107", n:"CIE 1A", f:0, x:365, y:215, s:'b'}, {id:"106", n:"IG Coordinator", f:0, x:415, y:215, s:'b'}, {id:"100", n:"Reception", f:0, x:465, y:215, s:'b'}, {id:"105", n:"Admin Office", f:0, x:515, y:215, s:'b'}, {id:"104", n:"CIE 1B", f:0, x:565, y:215, s:'b'}, {id:"103", n:"EY 1", f:0, x:615, y:215, s:'b'}, {id:"102", n:"EY 3A", f:0, x:665, y:215, s:'b'}, {id:"101", n:"Chemistry Lab", f:0, x:840, y:215, s:'b', w:100},
+    {id:"BW1", n:"Boys Washroom", f:1, x:75, y:215, s:'b'}, {id:"208", n:"CS Lab", f:1, x:160, y:215, s:'b', w:100}, {id:"207", n:"DP 1", f:1, x:340, y:215, s:'b'}, {id:"206", n:"IG 1", f:1, x:440, y:215, s:'b'}, {id:"205", n:"Library", f:1, x:560, y:215, s:'b', w:185}, {id:"204", n:"CIE 7", f:1, x:680, y:215, s:'b'}, {id:"203", n:"CIE 5", f:1, x:740, y:215, s:'b'}, {id:"202", n:"Biology Lab", f:1, x:860, y:215, s:'b'}, {id:"201", n:"ESS Lab", f:1, x:920, y:215, s:'b'},
+    {id:"209", n:"Art Lab", f:1, x:140, y:185, s:'t', w:150}, {id:"210", n:"DP 2", f:1, x:340, y:185, s:'t'}, {id:"211", n:"IG 2", f:1, x:440, y:185, s:'t'}, {id:"212", n:"Physics Lab", f:1, x:540, y:185, s:'t', w:100}, {id:"213", n:"CIE 8", f:1, x:640, y:185, s:'t'}, {id:"214", n:"CIE 6", f:1, x:710, y:185, s:'t'}, {id:"215", n:"Staff Room F1", f:1, x:840, y:185, s:'t'}, {id:"GW1", n:"Girls Washroom", f:1, x:895, y:185, s:'t'},
+    {id:"306", n:"Staff Room F2", f:2, x:315, y:185, s:'t'}, {id:"307", n:"ESL Room", f:2, x:365, y:185, s:'t'}, {id:"308", n:"Hindi Room", f:2, x:450, y:185, s:'t'}, {id:"309", n:"Tamil Room", f:2, x:550, y:185, s:'t'}, {id:"310", n:"Optional Room", f:2, x:650, y:185, s:'t'},
+    {id:"305", n:"Store Room", f:2, x:180, y:215, s:'b'}, {id:"304", n:"TT Room", f:2, x:250, y:215, s:'b'}, {id:"303", n:"Maths Dept", f:2, x:450, y:215, s:'b'}, {id:"302", n:"Economics Dept", f:2, x:550, y:215, s:'b'}, {id:"301", n:"MPH Hall", f:2, x:800, y:215, s:'b'}
+]; 
+
+function speak(text) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+
+function popConfetti() {
+    for (let i = 0; i < 150; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.top = '-20px';
+        const colors = ['#1a73e8', '#f4b400', '#0f9d58', '#db4437'];
+        c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        const size = (Math.random() * 8 + 4) + 'px';
+        c.style.width = size; c.style.height = size;
+        const duration = 3 + Math.random() * 2;
+        const delay = Math.random() * 2;
+        c.style.animation = `confettiFall ${duration}s ease-in ${delay}s forwards`;
+        document.getElementById('phone-wrapper').appendChild(c);
+        setTimeout(() => c.remove(), (duration + delay) * 1000);
+    }
+}
+
+function drawFloor(f) { 
+    if(isNavigating && f !== currentFloor) showOverlay(f > currentFloor ? "GOING UP" : "GOING DOWN", f > currentFloor ? "↑" : "↓");
+    currentFloor = f; 
+    document.getElementById("stairsLayer").innerHTML = "";
+    document.getElementById("roomsLayer").innerHTML = ""; 
+    document.getElementById("floorBadge").textContent = ["GROUND", "FIRST", "SECOND"][f] + " FLOOR"; 
+    
+    const stairs = [{x:235}]; if(f < 2) stairs.push({x:735});
+    stairs.forEach(s => {
+       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+       rect.setAttribute("x", s.x); rect.setAttribute("y", 125); rect.setAttribute("width", 50); rect.setAttribute("height", 60); rect.setAttribute("class", "stair-area");
+       document.getElementById("stairsLayer").appendChild(rect);
+    });
+
+    roomData.filter(r => r.f === f).forEach(r => { 
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); 
+        const roomWidth = r.w || 48; 
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); 
+        const ry = r.s === 't' ? r.y - 60 : r.y;
+        rect.setAttribute("x", r.x - (roomWidth / 2)); rect.setAttribute("y", ry); 
+        rect.setAttribute("width", roomWidth); rect.setAttribute("height", 60);
+        rect.setAttribute("class", "room-box"); 
+        g.appendChild(rect); 
+
+        const door = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        door.setAttribute("x", r.x - 6); door.setAttribute("y", r.s === 't' ? r.y - 2 : r.y - 1);
+        door.setAttribute("width", 12); door.setAttribute("height", 3); door.setAttribute("class", "door-mark");
+        g.appendChild(door);
+
+        const txt = document.createElementNS("http://www.w3.org/2000/svg", "text"); 
+        txt.setAttribute("x", r.x); txt.setAttribute("y", r.s === 't' ? r.y - 35 : r.y + 40); 
+        txt.setAttribute("class", "room-label"); 
+        r.n.split(' ').forEach((w, i) => { 
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "tspan"); 
+            t.setAttribute("x", r.x); t.setAttribute("dy", i === 0 ? "0" : "8"); t.textContent = w; txt.appendChild(t); 
+        }); 
+        g.appendChild(txt); document.getElementById("roomsLayer").appendChild(g); 
+    }); 
+} 
+
+function showOverlay(text, arrow) {
+    const ov = document.getElementById("floorOverlay");
+    document.getElementById("overlayArrow").textContent = arrow;
+    document.getElementById("overlayText").textContent = text;
+    ov.style.display = "flex";
+    setTimeout(() => { ov.style.display = "none"; }, 2000);
+}
+
+function update() { 
+    const container = document.getElementById("mapRotationContainer"); 
+    const marker = document.getElementById("userMarker");
+    const pLine = document.getElementById("pathLine");
+    const pCore = document.getElementById("pathCore");
+
+    if (!isNavigating) {
+        container.style.transform = `rotateX(0deg) scale(0.9) translate(0px, 0px)`;
+        marker.style.display = "none";
+        pLine.setAttribute("points", ""); pCore.setAttribute("points", "");
+        return;
+    }
+
+    if (!route[stepIdx]) return; 
+    const cur = route[stepIdx]; 
+    if (cur.f !== currentFloor) drawFloor(cur.f); 
+    document.getElementById("stepText").textContent = cur.t; 
+    speak(cur.t); 
+
+    if (cur.t === "Arrived!") popConfetti();
+
+    marker.style.display = "block";
+    marker.setAttribute("cx", cur.x); marker.setAttribute("cy", cur.y);
+
+    const tiltAngle = 45; 
+    const verticalOffset = -40;
+
+    if (currentMode === 'dynamic') { 
+        const next = route[stepIdx + 1]; 
+        if (next && next.f === cur.f) currentAngle = Math.atan2(next.y - cur.y, next.x - cur.x) * (180 / Math.PI) + 90; 
+        container.style.transform = `rotateX(${tiltAngle}deg) translateY(${verticalOffset}px) scale(2) rotate(${-currentAngle}deg) translate(${500 - cur.x}px, ${200 - cur.y}px)`; 
+    } else { 
+        container.style.transform = `rotateX(${tiltAngle}deg) translateY(${verticalOffset}px) scale(1.2) translate(${500 - cur.x}px, 0px)`; 
+    } 
+
+    const pts = route.slice(0, stepIdx + 1).filter(p => p.f === currentFloor).map(p => `${p.x},${p.y}`).join(" "); 
+    pLine.setAttribute("points", pts); pCore.setAttribute("points", pts);
+} 
+
+function quickNav(id) { document.getElementById("destSelect").value = id; startNav(); }
+
+function startNav() { 
+    const s = roomData.find(r => r.id === document.getElementById("startSelect").value); 
+    const d = roomData.find(r => r.id === document.getElementById("destSelect").value); 
+    if (!s || !d) return; 
+
+    isNavigating = true;
+    const sCY = s.s === 't' ? s.y - 30 : s.y + 30, dCY = d.s === 't' ? d.y - 30 : d.y + 30;
+    
+    route = [{ x: s.x, y: sCY, f: s.f, t: `Exit ${s.n}` }]; 
+    route.push({ x: s.x, y: 200, f: s.f, t: "Step into the hallway" });
+
+    if (s.f !== d.f) { 
+        const leftStairX = 260;
+        const rightStairX = 760;
+        const isLeftNear = Math.abs(s.x - leftStairX) < Math.abs(s.x - rightStairX);
+        const stairX = isLeftNear ? leftStairX : rightStairX;
+        const stairName = isLeftNear ? "Left" : "Right";
+        const toStairDir = stairX > s.x ? "Turn Right" : "Turn Left";
+        
+        route.push(
+            { x: stairX, y: 200, f: s.f, t: `${toStairDir} and go straight to the ${stairName} stairs` }, 
+            { x: stairX, y: 150, f: s.f, t: `${d.f > s.f ? "Go up" : "Go down"} to Floor ${d.f}` }, 
+            { x: stairX, y: 150, f: d.f, t: `You are now on Floor ${d.f}` }, 
+            { x: stairX, y: 200, f: d.f, t: "Walk back into the hallway" }
+        ); 
+
+        const finalDir = d.x > stairX ? "Turn Right" : "Turn Left";
+        route.push({ x: d.x, y: 200, f: d.f, t: `${finalDir} and walk straight` });
+    } else {
+        const directDir = d.x > s.x ? "Turn Right" : "Turn Left";
+        route.push({ x: d.x, y: 200, f: d.f, t: `${directDir} and walk straight` });
+    }
+
+    route.push({ x: d.x, y: dCY, f: d.f, t: `Arrived! ${d.n} is on your ${d.s === 't' ? 'Left' : 'Right'}` }); 
+
+    stepIdx = 0; 
+    document.getElementById("navCard").style.display = "block"; 
+    update(); 
+}
+
+function nextStep() { if(stepIdx < route.length - 1) { stepIdx++; update(); } else { resetNav(); } } 
+function prevStep() { if(stepIdx > 0) { stepIdx--; update(); } } 
+function resetNav() { isNavigating = false; document.getElementById("navCard").style.display = "none"; update(); }
+function setMode(m) { 
+    currentMode = m; 
+    document.getElementById('staticBtn').classList.toggle('active-mode', m==='static'); 
+    document.getElementById('dynamicBtn').classList.toggle('active-mode', m==='dynamic'); 
+    if(isNavigating) update(); 
+} 
+
+const sEl = document.getElementById("startSelect"), dEl = document.getElementById("destSelect"); 
+roomData.sort((a,b)=>a.n.localeCompare(b.n)).forEach(r => { 
+    sEl.add(new Option(r.n, r.id)); 
+    dEl.add(new Option(r.n, r.id)); 
+}); 
+
+sEl.value = "100"; 
+drawFloor(0); 
+update(); 
+</script> 
+</body> 
+</html>
