@@ -72,7 +72,7 @@
     display: flex; 
     justify-content: center; 
     align-items: center; 
-    padding-bottom: 0px; /* Changed from 100px to 0px */
+    padding-bottom: 0px;
     perspective: 1500px;
 }
 
@@ -124,11 +124,15 @@
         #pathLine { stroke: var(--g-blue); stroke-width: 12; stroke-opacity: 0.1; fill: none; stroke-linecap: round; }
         #pathCore { stroke: var(--g-blue); stroke-width: 4; fill: none; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(26, 115, 232, 0.4)); }
 
-        .confetti { position: absolute; width: 8px; height: 8px; z-index: 1000; pointer-events: none; border-radius: 2px; }
-        @keyframes confettiFall { 
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; } 
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } 
-        }
+        .confetti { 
+    position: absolute; 
+    width: 8px; 
+    height: 8px; 
+    z-index: 9999; /* Higher than everything else */
+    pointer-events: none; 
+    border-radius: 2px; 
+    top: -10px; /* Start slightly above the top */
+}
     </style> 
 </head> 
 <body> 
@@ -174,7 +178,7 @@
     <div style="padding: 0 20px 20px; display: flex; gap: 12px;">
         <button class="btn" style="background:#f1f3f4; color:#5f6368" onclick="prevStep()">BACK</button>
         <button class="btn" style="background:var(--g-blue); color:white" onclick="nextStep()">NEXT</button>
-        <button class="btn" style="background:#ea4335; color:white; flex: 0.4" onclick="resetNav()">EXIT</button>
+        <button class="btn" style="background:#ff594a; color:white; flex: 0.4" onclick="resetNav()">EXIT</button>
     </div> 
 </div>
 </div> 
@@ -204,19 +208,31 @@ function speak(text) {
 }
 
 function popConfetti() {
-    for (let i = 0; i < 150; i++) {
+    const wrapper = document.getElementById('phone-wrapper');
+    for (let i = 0; i < 100; i++) {
         const c = document.createElement('div');
         c.className = 'confetti';
+        
+        // Random horizontal position
         c.style.left = Math.random() * 100 + '%';
-        c.style.top = '-20px';
+        
+        // Random Google colors
         const colors = ['#1a73e8', '#f4b400', '#0f9d58', '#db4437'];
         c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Random size
         const size = (Math.random() * 8 + 4) + 'px';
-        c.style.width = size; c.style.height = size;
-        const duration = 3 + Math.random() * 2;
-        const delay = Math.random() * 2;
-        c.style.animation = `confettiFall ${duration}s ease-in ${delay}s forwards`;
-        document.getElementById('phone-wrapper').appendChild(c);
+        c.style.width = size; 
+        c.style.height = size;
+        
+        // Random animation timing
+        const duration = 2 + Math.random() * 2;
+        const delay = Math.random() * 0.5;
+        c.style.animation = `confettiFall ${duration}s linear ${delay}s forwards`;
+        
+        wrapper.appendChild(c);
+        
+        // Clean up memory
         setTimeout(() => c.remove(), (duration + delay) * 1000);
     }
 }
@@ -290,7 +306,8 @@ function update() {
     document.getElementById("stepText").textContent = cur.t; 
     speak(cur.t); 
 
-    if (cur.t === "Arrived!") popConfetti();
+// Change this line in your update() function:
+if (cur.t.includes("Arrived!")) popConfetti();
 
     marker.style.display = "block";
     marker.setAttribute("cx", cur.x); marker.setAttribute("cy", cur.y);
@@ -353,15 +370,16 @@ function startNav() {
         let stairX;
         let stairName;
 
-        // NEW LOGIC: If going to Floor 2, MUST use Left Stairs (260)
+        // UPDATED LOGIC: Choose stairs based on destination proximity
         if (d.f === 2 || s.f === 2) {
+            // MUST use Left Stairs for Second Floor
             stairX = leftStairX;
             stairName = "Left";
         } else {
-            // Otherwise, use the closest one
-            const isLeftNear = Math.abs(s.x - leftStairX) < Math.abs(s.x - rightStairX);
-            stairX = isLeftNear ? leftStairX : rightStairX;
-            stairName = isLeftNear ? "Left" : "Right";
+            // Choose the stair closest to the DESTINATION (d.x)
+            const isLeftNearDest = Math.abs(d.x - leftStairX) < Math.abs(d.x - rightStairX);
+            stairX = isLeftNearDest ? leftStairX : rightStairX;
+            stairName = isLeftNearDest ? "Left" : "Right";
         }
         
         const toStairDir = stairX > s.x ? "Turn Right" : "Turn Left";
@@ -386,7 +404,6 @@ function startNav() {
     document.getElementById("navCard").style.display = "block"; 
     update();
 }
-
 function nextStep() { if(stepIdx < route.length - 1) { stepIdx++; update(); } else { resetNav(); } } 
 function prevStep() { if(stepIdx > 0) { stepIdx--; update(); } } 
 function resetNav() { isNavigating = false; document.getElementById("navCard").style.display = "none"; update(); }
@@ -423,8 +440,4 @@ update();
 </script> 
 </body> 
 </html>
-
-
-
-
 
