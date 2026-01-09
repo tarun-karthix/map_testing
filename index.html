@@ -372,7 +372,7 @@ function startNav() {
         ); 
 
         // Turn logic when coming out of stairs (Facing the hall)
-        const finalDir = d.x > stairX ? "Turn Right" : "Turn Left"; 
+        const finalDir = d.x > stairX ? "Turn Left" : "Turn Right"; 
         route.push({ x: d.x, y: 200, f: d.f, t: `${finalDir} and walk straight` });
     } else {
         const directDir = getHallwayTurn(s.x, d.x, s.s);
